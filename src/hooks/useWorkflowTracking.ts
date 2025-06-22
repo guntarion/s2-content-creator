@@ -123,12 +123,15 @@ export function useWorkflowTracking(): UseWorkflowTrackingReturn {
       if (config.enableSSE) {
         setUseSSE(true);
       }
+      
+      return response; // Return the response so the component can access workflow_id
     } catch (err) {
       const errorMessage = err instanceof BlogAPIError 
         ? err.message 
         : 'Failed to start blog generation';
       setError(errorMessage);
       setIsLoading(false);
+      throw err; // Re-throw the error so the component can handle it
     }
   }, [client]);
 

@@ -158,7 +158,7 @@ export interface UseWorkflowTrackingReturn {
   connectionType: 'sse' | 'polling' | 'disconnected';
   
   // Actions
-  startGeneration: (request: BlogRequest) => Promise<void>;
+  startGeneration: (request: BlogRequest) => Promise<WorkflowResponse>;
   reset: () => void;
   retry: () => Promise<void>;
 }

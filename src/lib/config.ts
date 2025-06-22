@@ -7,7 +7,7 @@ export const config = {
   apiBaseUrl: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
   
   // Real-time Updates
-  enableSSE: process.env.NEXT_PUBLIC_ENABLE_SSE !== 'false', // Default to true
+  enableSSE: process.env.NEXT_PUBLIC_ENABLE_SSE === 'true', // Default to false
   pollingInterval: parseInt(process.env.NEXT_PUBLIC_POLLING_INTERVAL || '2000'),
   
   // Network Settings

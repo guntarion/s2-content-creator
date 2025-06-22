@@ -46,12 +46,14 @@ export default function GeneratePage() {
 
   const handleSubmit = async (data: BlogRequest) => {
     try {
-      await startGeneration(data);
+      const response = await startGeneration(data);
       
-      // Get the workflow ID from the hook and navigate
-      // Note: In the actual implementation, we'd get the workflow ID from the response
-      const mockWorkflowId = `workflow-${Date.now()}`;
-      router.push(`/workflow/${mockWorkflowId}`);
+      // Use the actual workflow ID from the backend response
+      if (response?.workflow_id) {
+        router.push(`/workflow/${response.workflow_id}`);
+      } else {
+        console.error('No workflow ID received from backend');
+      }
     } catch (err) {
       console.error('Failed to start generation:', err);
     }
