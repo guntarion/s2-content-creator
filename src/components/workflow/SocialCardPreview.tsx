@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 
 import { SocialPlatform } from '@/lib/types';
+import { processImageUrl } from '@/lib/image-utils';
 
 interface SocialCardPreviewProps {
   snippet: string;
@@ -135,7 +136,7 @@ function TwitterCard({
                   <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
                     {thumbnail && (
                       <img 
-                        src={thumbnail} 
+                        src={processImageUrl(thumbnail) || thumbnail} 
                         alt="Preview" 
                         className="w-full h-32 object-cover"
                       />
@@ -234,7 +235,7 @@ function LinkedInCard({
             <div className="border-t border-gray-100">
               {thumbnail && (
                 <img 
-                  src={thumbnail} 
+                  src={processImageUrl(thumbnail) || thumbnail} 
                   alt="Preview" 
                   className="w-full h-40 object-cover"
                 />
@@ -321,7 +322,7 @@ function InstagramCard({
           {thumbnail && (
             <div className="aspect-square">
               <img 
-                src={thumbnail} 
+                src={processImageUrl(thumbnail) || thumbnail} 
                 alt="Instagram post" 
                 className="w-full h-full object-cover"
               />

@@ -14,9 +14,9 @@ import { apiClient, devApiClient, BlogAPIError } from '@/lib/api-client';
 import { config } from '@/lib/config';
 import { useWorkflowStream } from './useWorkflowStream';
 
-export function useWorkflowTracking(): UseWorkflowTrackingReturn {
+export function useWorkflowTracking(initialWorkflowId?: string | null): UseWorkflowTrackingReturn {
   // State
-  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const [workflowId, setWorkflowId] = useState<string | null>(initialWorkflowId || null);
   const [result, setResult] = useState<BlogPostResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +24,15 @@ export function useWorkflowTracking(): UseWorkflowTrackingReturn {
 
   // Choose API client based on configuration
   const client = config.enableMockApi ? devApiClient : apiClient;
+
+  // Sync internal state with prop changes
+  useEffect(() => {
+    if (initialWorkflowId && initialWorkflowId !== workflowId) {
+      setWorkflowId(initialWorkflowId);
+      setError(null); // Clear any previous errors
+      setResult(null); // Clear any previous results
+    }
+  }, [initialWorkflowId, workflowId]);
 
   // SSE connection for real-time updates
   const { 
@@ -38,7 +47,7 @@ export function useWorkflowTracking(): UseWorkflowTrackingReturn {
     error: pollingError,
     mutate: mutateStatus 
   } = useSWR(
-    !useSSE && workflowId ? [`/blog/workflow-status/${workflowId}`, workflowId] : null,
+    !useSSE && workflowId ? `/blog/workflow-status/${workflowId}` : null,
     () => client.getWorkflowStatus(workflowId!),
     {
       refreshInterval: config.pollingInterval,

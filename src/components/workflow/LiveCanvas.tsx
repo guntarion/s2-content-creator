@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import { WorkflowStatus, BlogPostResult } from '@/lib/types';
+import { processImageUrl } from '@/lib/image-utils';
 import { SocialCardPreview } from './SocialCardPreview';
 
 interface LiveCanvasProps {
@@ -118,8 +119,8 @@ export function LiveCanvas({
           {visibleElements.has('images') && (
             <motion.div {...fadeInUp} transition={{ delay: 0.5 }}>
               <ImageSection 
-                featuredImage={stepOutputs.image_generation?.url || result?.featured_image_url}
-                thumbnail={stepOutputs.thumbnail_creation?.url || result?.thumbnail_url}
+                featuredImage={processImageUrl(stepOutputs.image_generation?.url || result?.featured_image_url)}
+                thumbnail={processImageUrl(stepOutputs.thumbnail_creation?.url || result?.thumbnail_url)}
               />
             </motion.div>
           )}
@@ -131,7 +132,7 @@ export function LiveCanvas({
             <motion.div {...fadeInUp} transition={{ delay: 0.6 }}>
               <SocialSection 
                 snippet={stepOutputs.social_snippet_generation || result?.social_media_snippet}
-                thumbnail={stepOutputs.thumbnail_creation?.url || result?.thumbnail_url}
+                thumbnail={processImageUrl(stepOutputs.thumbnail_creation?.url || result?.thumbnail_url)}
                 title={stepOutputs.seo_optimization?.title || result?.seo_title}
               />
             </motion.div>
@@ -301,10 +302,15 @@ function ContentSection({
   content, 
   isComplete 
 }: { 
-  content?: string;
+  content?: string | { content?: string };
   isComplete: boolean;
 }) {
-  if (!content) {
+  // Extract string content if it's an object
+  const contentString = typeof content === 'string' 
+    ? content 
+    : content?.content || '';
+    
+  if (!contentString) {
     return <ContentSkeleton />;
   }
 
@@ -359,7 +365,7 @@ function ContentSection({
               )
             }}
           >
-            {content}
+            {contentString}
           </ReactMarkdown>
         </motion.div>
       </CardContent>
@@ -469,11 +475,16 @@ function SocialSection({
   thumbnail, 
   title 
 }: { 
-  snippet?: string;
+  snippet?: string | { snippet?: string; platform_optimized?: any };
   thumbnail?: string;
   title?: string;
 }) {
-  if (!snippet) return null;
+  // Extract string snippet if it's an object
+  const snippetString = typeof snippet === 'string' 
+    ? snippet 
+    : snippet?.snippet || '';
+    
+  if (!snippetString) return null;
 
   return (
     <Card>
@@ -490,7 +501,7 @@ function SocialSection({
           transition={{ duration: 0.5 }}
         >
           <SocialCardPreview
-            snippet={snippet}
+            snippet={snippetString}
             thumbnail={thumbnail}
             title={title}
           />

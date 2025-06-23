@@ -49,6 +49,8 @@ interface WorkflowStepProps {
   output?: any;
   isActive?: boolean;
   onClick?: () => void;
+  showConnector?: boolean;
+  workflowStatus?: WorkflowStatus | null;
 }
 
 const STEP_ICONS = {
@@ -87,6 +89,12 @@ export function ControlTower({ status, stepOutputs, isLoading, className }: Cont
   const getStepStatus = (stepKey: string): StepStatus => {
     if (!status) return 'pending';
     
+    // Use backend step data if available
+    if (status.steps && status.steps[stepKey]) {
+      return status.steps[stepKey].status as StepStatus;
+    }
+    
+    // Fallback to progress-based calculation
     const stepConfig = WORKFLOW_STEPS_CONFIG[stepKey as keyof typeof WORKFLOW_STEPS_CONFIG];
     const [startProgress, endProgress] = stepConfig.progressRange;
     
@@ -115,6 +123,7 @@ export function ControlTower({ status, stepOutputs, isLoading, className }: Cont
       setExpandedStep(expandedStep === stepKey ? null : stepKey);
     }
   };
+
 
   const currentStepKey = getCurrentStepKey();
 
@@ -157,25 +166,62 @@ export function ControlTower({ status, stepOutputs, isLoading, className }: Cont
 
           {/* Workflow Steps */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-lg">Workflow Steps</h3>
+            <h3 className="font-semibold text-lg">Assembly Line</h3>
             
-            {Object.entries(WORKFLOW_STEPS_CONFIG).map(([stepKey, config], index) => {
-              const stepStatus = getStepStatus(stepKey);
-              const isActive = currentStepKey === stepKey;
-              const hasOutput = stepOutputs[stepKey];
-
-              return (
-                <WorkflowStep
-                  key={stepKey}
-                  stepKey={stepKey}
-                  config={config}
-                  status={stepStatus}
-                  output={stepOutputs[stepKey]}
-                  isActive={isActive}
-                  onClick={() => handleStepClick(stepKey)}
+            <div className="relative">
+              {/* Conveyor Belt - Vertical Line */}
+              <div className="absolute left-6 top-0 bottom-0 w-px bg-gray-300" />
+              
+              {/* Active Progress Line */}
+              {status && (
+                <motion.div
+                  className="absolute left-6 top-0 w-px bg-blue-500"
+                  initial={{ height: 0 }}
+                  animate={{ 
+                    height: `${(status.progress / 100) * 100}%`
+                  }}
+                  transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
-              );
-            })}
+              )}
+              
+              {Object.entries(WORKFLOW_STEPS_CONFIG).map(([stepKey, config], index) => {
+                const stepStatus = getStepStatus(stepKey);
+                const isActive = currentStepKey === stepKey;
+                const hasOutput = stepOutputs[stepKey];
+                const isLast = index === Object.keys(WORKFLOW_STEPS_CONFIG).length - 1;
+
+                return (
+                  <div key={stepKey} className="relative">
+                    <WorkflowStep
+                      stepKey={stepKey}
+                      config={config}
+                      status={stepStatus}
+                      output={stepOutputs[stepKey]}
+                      isActive={isActive}
+                      onClick={() => handleStepClick(stepKey)}
+                      showConnector={!isLast}
+                      workflowStatus={status}
+                    />
+                    
+                    {/* Pulse animation for active step */}
+                    {isActive && (
+                      <motion.div
+                        className="absolute left-5 top-8 w-3 h-3 bg-blue-500 rounded-full"
+                        animate={{ 
+                          scale: [1, 1.5, 1],
+                          opacity: [1, 0.5, 1]
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: 'easeInOut'
+                        }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <Separator />
@@ -201,7 +247,9 @@ function WorkflowStep({
   status, 
   output, 
   isActive, 
-  onClick 
+  onClick,
+  showConnector,
+  workflowStatus
 }: WorkflowStepProps) {
   const IconComponent = STEP_ICONS[config.icon as keyof typeof STEP_ICONS] || Circle;
   const hasOutput = Boolean(output);
@@ -254,31 +302,41 @@ function WorkflowStep({
       >
         <CardContent className="p-4">
           <div className="flex items-start space-x-3">
-            {/* Step Icon */}
-            <div className={cn(
-              "p-2 rounded-lg",
-              status === 'completed' ? 'bg-green-100' : 
-              status === 'processing' ? 'bg-blue-100' : 
-              status === 'failed' ? 'bg-red-100' : 'bg-gray-100'
-            )}>
-              <IconComponent className={cn(
-                "h-4 w-4",
-                status === 'completed' ? 'text-green-600' :
-                status === 'processing' ? 'text-blue-600' :
-                status === 'failed' ? 'text-red-600' : 'text-gray-600'
-              )} />
+            {/* Step Connection Point for Assembly Line */}
+            <div className="relative flex flex-col items-center">
+              {/* Step Icon */}
+              <div className={cn(
+                "p-2 rounded-lg relative z-10 border-2",
+                status === 'completed' ? 'bg-green-100 border-green-300' : 
+                status === 'processing' ? 'bg-blue-100 border-blue-300' : 
+                status === 'failed' ? 'bg-red-100 border-red-300' : 'bg-gray-100 border-gray-300'
+              )}>
+                <IconComponent className={cn(
+                  "h-4 w-4",
+                  status === 'completed' ? 'text-green-600' :
+                  status === 'processing' ? 'text-blue-600' :
+                  status === 'failed' ? 'text-red-600' : 'text-gray-600'
+                )} />
+              </div>
             </div>
 
             {/* Step Content */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-sm">{config.title}</h4>
-                <StatusIcon className={cn("h-4 w-4", statusConfig[status].className)} />
+                <div className="flex items-center space-x-2">
+                  {status === 'processing' && (
+                    <div className="text-xs text-blue-600 font-medium">
+                      {workflowStatus?.steps?.[stepKey]?.progress || 0}%
+                    </div>
+                  )}
+                  <StatusIcon className={cn("h-4 w-4", statusConfig[status].className)} />
+                </div>
               </div>
               
               <p className="text-xs text-muted-foreground mt-1">
                 {isActive 
-                  ? getDynamicStatusMessage(stepKey, status)
+                  ? getStepLogMessage(stepKey, workflowStatus || null) || getDynamicStatusMessage(stepKey, status)
                   : config.description
                 }
               </p>
@@ -293,10 +351,15 @@ function WorkflowStep({
                 </div>
               )}
 
-              {/* Progress indicator for active step */}
+              {/* Real-time progress indicator for active step */}
               {isActive && status === 'processing' && (
                 <div className="mt-2 w-full bg-gray-200 rounded-full h-1">
-                  <div className="bg-blue-500 h-1 rounded-full animate-pulse" style={{ width: '60%' }} />
+                  <motion.div 
+                    className="bg-blue-500 h-1 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${workflowStatus?.steps?.[stepKey]?.progress || 0}%` }}
+                    transition={{ duration: 0.5 }}
+                  />
                 </div>
               )}
             </div>
@@ -421,6 +484,11 @@ function StepOutputContent({ stepKey, output }: { stepKey: string; output: any }
         </div>
       );
   }
+}
+
+function getStepLogMessage(stepKey: string, status: WorkflowStatus | null): string | null {
+  if (!status?.steps || !status.steps[stepKey]) return null;
+  return status.steps[stepKey].log_message || null;
 }
 
 function getDynamicStatusMessage(stepKey: string, status: StepStatus): string {

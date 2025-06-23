@@ -36,16 +36,31 @@ export interface WorkflowResponse {
   message?: string;
 }
 
-// Workflow Status
+// Workflow Step Data (matches backend WorkflowStepData)
+export interface WorkflowStepData {
+  name: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: number;             // 0-100 for this specific step
+  log_message?: string;         // Real-time status message
+  output?: Record<string, any>; // Step output data
+  started_at?: string;          // ISO timestamp
+  completed_at?: string;        // ISO timestamp
+}
+
+// Enhanced Workflow Status (matches backend)
 export interface WorkflowStatus {
   id: string;
   status: 'pending' | 'processing' | 'completed' | 'failed';
-  progress: number;              // 0-100
+  progress: number;              // 0-100 overall
   current_step: string;
   result?: any;
   error?: string;
   created_at: string;           // ISO timestamp
   updated_at: string;           // ISO timestamp
+  
+  // Enhanced data for frontend (from backend)
+  steps?: Record<string, WorkflowStepData>;     // Step-by-step status
+  intermediate_output?: Record<string, any>;    // Current canvas data
 }
 
 // Blog Post Result

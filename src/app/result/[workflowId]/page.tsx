@@ -9,6 +9,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeHighlight from 'rehype-highlight';
 import { 
   ArrowLeft, 
   Download, 
@@ -36,6 +38,7 @@ import { Label } from '@/components/ui/label';
 
 import { SocialCardPreview } from '@/components/workflow/SocialCardPreview';
 import { BlogPostResult } from '@/lib/types';
+import { processImageUrl } from '@/lib/image-utils';
 import { devApiClient } from '@/lib/api-client';
 
 export default function ResultPage() {
@@ -252,9 +255,41 @@ export default function ResultPage() {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="prose prose-gray max-w-none"
+                    className="prose prose-gray prose-lg max-w-none prose-headings:text-gray-900 prose-h1:text-3xl prose-h2:text-2xl prose-h3:text-xl prose-p:text-gray-700 prose-p:leading-7 prose-strong:text-gray-900 prose-code:text-blue-600 prose-code:bg-blue-50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-blockquote:border-l-blue-500 prose-blockquote:bg-blue-50 prose-blockquote:py-2 prose-blockquote:px-4 prose-ul:text-gray-700 prose-ol:text-gray-700 prose-li:text-gray-700"
                   >
-                    <ReactMarkdown>{editedContent}</ReactMarkdown>
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      rehypePlugins={[rehypeHighlight]}
+                      components={{
+                        h1: ({node, ...props}) => <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-8 first:mt-0" {...props} />,
+                        h2: ({node, ...props}) => <h2 className="text-2xl font-semibold text-gray-900 mb-4 mt-6" {...props} />,
+                        h3: ({node, ...props}) => <h3 className="text-xl font-medium text-gray-900 mb-3 mt-5" {...props} />,
+                        h4: ({node, ...props}) => <h4 className="text-lg font-medium text-gray-900 mb-2 mt-4" {...props} />,
+                        p: ({node, ...props}) => <p className="text-gray-700 leading-7 mb-4" {...props} />,
+                        ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 text-gray-700 space-y-1" {...props} />,
+                        ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 text-gray-700 space-y-1" {...props} />,
+                        li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
+                        blockquote: ({node, ...props}) => (
+                          <blockquote className="border-l-4 border-blue-500 bg-blue-50 py-2 px-4 mb-4 italic text-gray-700" {...props} />
+                        ),
+                        code: ({node, inline, ...props}) => 
+                          inline ? (
+                            <code className="text-blue-600 bg-blue-50 px-1 py-0.5 rounded text-sm font-mono" {...props} />
+                          ) : (
+                            <code className="block bg-gray-100 p-4 rounded-lg text-sm font-mono overflow-x-auto mb-4" {...props} />
+                          ),
+                        pre: ({node, ...props}) => (
+                          <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4" {...props} />
+                        ),
+                        strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
+                        em: ({node, ...props}) => <em className="italic text-gray-700" {...props} />,
+                        a: ({node, ...props}) => (
+                          <a className="text-blue-600 hover:text-blue-800 underline" {...props} />
+                        ),
+                      }}
+                    >
+                      {editedContent}
+                    </ReactMarkdown>
                   </motion.div>
                 )}
               </CardContent>
@@ -274,7 +309,7 @@ export default function ResultPage() {
                     <Label>Featured Image</Label>
                     <div className="mt-2 rounded-lg overflow-hidden border">
                       <img 
-                        src={result.featured_image_url} 
+                        src={processImageUrl(result.featured_image_url) || result.featured_image_url} 
                         alt="Featured image"
                         className="w-full h-64 object-cover"
                       />
@@ -286,7 +321,7 @@ export default function ResultPage() {
                       <Label>Social Thumbnail</Label>
                       <div className="mt-2 w-48 rounded-lg overflow-hidden border">
                         <img 
-                          src={result.thumbnail_url} 
+                          src={processImageUrl(result.thumbnail_url) || result.thumbnail_url} 
                           alt="Social thumbnail"
                           className="w-full h-36 object-cover"
                         />
@@ -308,7 +343,7 @@ export default function ResultPage() {
               <CardContent>
                 <SocialCardPreview
                   snippet={result.social_media_snippet}
-                  thumbnail={result.thumbnail_url}
+                  thumbnail={processImageUrl(result.thumbnail_url)}
                   title={result.seo_title}
                   description={result.meta_description}
                 />

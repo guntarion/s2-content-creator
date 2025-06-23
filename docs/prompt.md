@@ -86,9 +86,64 @@ The second priority is to make the intention of front end to be fulfilled. Since
 
 After implementing the the second priority, create report, do npm run check and npm run build. Fix any errors. If done, do git commit with github MCP. Provide useful comment.
 
+---
 
 
 
+On "Start Demo Workflow" on frontend:
+- /Users/guntar/Documents/SourceCodes/PROJECTS/FABRIC/s2-content-creator/README.md
+- /Users/guntar/Documents/SourceCodes/PROJECTS/FABRIC/s2-content-creator/docs/backend-integration.md
+
+I'm getting "Loading workflow..." text and there's nothing going on. it stopped. No error message on user's browser.
+
+I got this on front end's log:
+
+```
+ ✓ Starting...
+ ✓ Ready in 918ms
+ ○ Compiling / ...
+ ✓ Compiled / in 2.5s
+ GET / 200 in 2860ms
+ ○ Compiling /generate ...
+ ✓ Compiled /generate in 946ms
+ GET /generate 200 in 972ms
+ ○ Compiling /workflow/[workflowId] ...
+ ✓ Compiled /workflow/[workflowId] in 1239ms
+ GET /workflow/ddf33cd2-ddbd-4b4e-b5d9-23829eb8c3b6 200 in 1818ms
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 849ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 887ms
+```
+
+
+
+on backend:
+
+```
+NFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [20983] using WatchFiles
+Both GOOGLE_API_KEY and GEMINI_API_KEY are set. Using GOOGLE_API_KEY.
+INFO:     Started server process [20985]
+INFO:     Waiting for application startup.
+Starting FastAPI Workflow Post application...
+Application startup complete
+INFO:     Application startup complete.
+INFO:     127.0.0.1:57199 - "OPTIONS /blog/generate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57199 - "POST /blog/generate HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57199 - "OPTIONS /blog/workflow-status/ddf33cd2-ddbd-4b4e-b5d9-23829eb8c3b6 HTTP/1.1" 200 OK
+INFO:     127.0.0.1:57201 - "GET /blog/workflow-status/ddf33cd2-ddbd-4b4e-b5d9-23829eb8c3b6 HTTP/1.1" 200 OK
+Error extracting image: cannot identify image file <_io.BytesIO object at 0x12054eca0>
+```
+
+
+
+You can assign sub agent to deal with front end.
+
+The newly created files on frontend are /Users/guntar/Documents/SourceCodes/PROJECTS/FABRIC/s2-content-creator/src/components/workflow/WorkflowTracker.tsx and /Users/guntar/Documents/SourceCodes/PROJECTS/FABRIC/s2-content-creator/src/components/workflow/ControlTower.tsx
+
+"Start demo workflow" is at /Users/guntar/Documents/SourceCodes/PROJECTS/FABRIC/s2-content-creator/src/components/workflow/ControlTower.tsx
+
+You can use gemini MCP to help dealing with front end, and ask suggestion.
 
 
 

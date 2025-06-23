@@ -44,13 +44,7 @@ export function WorkflowTracker({
     isLoading,
     connectionType,
     retry,
-  } = useWorkflowTracking();
-
-  // Initialize workflow tracking with the provided ID
-  useEffect(() => {
-    // This would be handled by the parent component or router
-    // The workflowId should already be set when this component mounts
-  }, [workflowId]);
+  } = useWorkflowTracking(workflowId);
 
   // Handle completion
   useEffect(() => {
@@ -69,42 +63,18 @@ export function WorkflowTracker({
     }
   }, [error, onError]);
 
-  // Extract step outputs from status
+  // Extract step outputs from enhanced backend status
   useEffect(() => {
-    if (status?.current_step && status?.progress) {
-      // Mock step outputs based on progress for now
-      // In real implementation, these would come from the backend
+    if (status?.intermediate_output) {
+      // Use real outputs from backend instead of mock data
       const outputs: Record<string, any> = {};
       
-      if (status.progress > 10) {
-        outputs.keyword_research = {
-          keywords: ['ai healthcare', 'medical technology', 'patient care', 'digital health'],
-          primary_keyword: 'ai healthcare technology',
-          search_intent: 'informational'
-        };
-      }
-      
-      if (status.progress > 25) {
-        outputs.content_generation = '# AI in Healthcare\n\nArtificial intelligence is revolutionizing...';
-      }
-      
-      if (status.progress > 40) {
-        outputs.seo_optimization = {
-          title: 'AI in Healthcare: Transforming Patient Care in 2024',
-          description: 'Discover how AI is revolutionizing healthcare...'
-        };
-      }
-      
-      if (status.progress > 75) {
-        outputs.image_generation = {
-          url: 'https://via.placeholder.com/800x400/3498db/ffffff?text=AI+Healthcare',
-          alt: 'AI in Healthcare visualization'
-        };
-      }
-      
-      if (status.progress > 85) {
-        outputs.social_snippet = '🚀 AI is transforming healthcare! Discover the latest innovations...';
-      }
+      // Extract outputs from backend intermediate_output
+      Object.keys(status.intermediate_output).forEach(key => {
+        if (key !== 'type' && key !== 'overall_progress') {
+          outputs[key] = status.intermediate_output![key];
+        }
+      });
       
       setStepOutputs(outputs);
     }
