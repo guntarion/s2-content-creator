@@ -400,9 +400,11 @@ export default function ResultPage() {
                         FEATURED IMAGE
                       </Label>
                       <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden cursor-pointer" onClick={() => setSelectedImage(result.featured_image_url || null)}>
-<Image 
-  src={processImageUrl(result.featured_image_url) || result.featured_image_url} 
-  alt="Featured image preview" 
+<Image
+  src={processImageUrl(result.featured_image_url) || result.featured_image_url}
+  alt="Featured image preview"
+  width={800}
+  height={128}
   className="w-full h-32 object-cover"
 />
                       </div>
@@ -439,9 +441,11 @@ export default function ResultPage() {
                         SOCIAL THUMBNAIL
                       </Label>
                       <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden cursor-pointer" onClick={() => setSelectedImage(result.thumbnail_url || null)}>
-<Image 
-  src={processImageUrl(result.thumbnail_url) || result.thumbnail_url} 
-  alt="Thumbnail preview" 
+<Image
+  src={processImageUrl(result.thumbnail_url) || result.thumbnail_url}
+  alt="Thumbnail preview"
+  width={800}
+  height={128}
   className="w-full h-32 object-cover"
 />
                       </div>
