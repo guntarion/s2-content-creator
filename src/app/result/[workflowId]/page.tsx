@@ -6,7 +6,7 @@
  */
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -22,18 +22,17 @@ import {
   Image as ImageIcon,
   Tag,
   Clock,
-  ExternalLink,
   Check,
-  Sparkles
+  Sparkles,
+  X
 } from 'lucide-react';
+import Image from 'next/image'; // Importing Image from next/image
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 import { SocialCardPreview } from '@/components/workflow/SocialCardPreview';
@@ -50,16 +49,11 @@ export default function ResultPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [copied, setCopied] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   
   const workflowId = params.workflowId as string;
 
-  useEffect(() => {
-    if (workflowId) {
-      fetchResult();
-    }
-  }, [workflowId]);
-
-  const fetchResult = async () => {
+  const fetchResult = useCallback(async () => {
     try {
       setIsLoading(true);
       const data = await devApiClient.getBlogResult(workflowId);
@@ -70,7 +64,27 @@ export default function ResultPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [workflowId]);
+
+  useEffect(() => {
+    if (workflowId) {
+      fetchResult();
+    }
+  }, [workflowId, fetchResult]);
+
+  // Handle ESC key to close image modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && selectedImage) {
+        setSelectedImage(null);
+      }
+    };
+
+    if (selectedImage) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedImage]);
 
   const handleCopy = async (text: string, type: string) => {
     try {
@@ -261,29 +275,29 @@ export default function ResultPage() {
                       remarkPlugins={[remarkGfm]}
                       rehypePlugins={[rehypeHighlight]}
                       components={{
-                        h1: ({node, ...props}) => <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-8 first:mt-0" {...props} />,
-                        h2: ({node, ...props}) => <h2 className="text-2xl font-semibold text-gray-900 mb-4 mt-6" {...props} />,
-                        h3: ({node, ...props}) => <h3 className="text-xl font-medium text-gray-900 mb-3 mt-5" {...props} />,
-                        h4: ({node, ...props}) => <h4 className="text-lg font-medium text-gray-900 mb-2 mt-4" {...props} />,
-                        p: ({node, ...props}) => <p className="text-gray-700 leading-7 mb-4" {...props} />,
-                        ul: ({node, ...props}) => <ul className="list-disc list-inside mb-4 text-gray-700 space-y-1" {...props} />,
-                        ol: ({node, ...props}) => <ol className="list-decimal list-inside mb-4 text-gray-700 space-y-1" {...props} />,
-                        li: ({node, ...props}) => <li className="text-gray-700" {...props} />,
-                        blockquote: ({node, ...props}) => (
+                        h1: ({...props}) => <h1 className="text-3xl font-bold text-gray-900 mb-6 mt-8 first:mt-0" {...props} />,
+                        h2: ({...props}) => <h2 className="text-2xl font-semibold text-gray-900 mb-4 mt-6" {...props} />,
+                        h3: ({...props}) => <h3 className="text-xl font-medium text-gray-900 mb-3 mt-5" {...props} />,
+                        h4: ({...props}) => <h4 className="text-lg font-medium text-gray-900 mb-2 mt-4" {...props} />,
+                        p: ({...props}) => <p className="text-gray-700 leading-7 mb-4" {...props} />,
+                        ul: ({...props}) => <ul className="list-disc list-inside mb-4 text-gray-700 space-y-1" {...props} />,
+                        ol: ({...props}) => <ol className="list-decimal list-inside mb-4 text-gray-700 space-y-1" {...props} />,
+                        li: ({...props}) => <li className="text-gray-700" {...props} />,
+                        blockquote: ({...props}) => (
                           <blockquote className="border-l-4 border-blue-500 bg-blue-50 py-2 px-4 mb-4 italic text-gray-700" {...props} />
                         ),
-                        code: ({node, inline, ...props}) => 
+                        code: ({inline, ...props}: {inline?: boolean} & React.HTMLAttributes<HTMLElement>) => 
                           inline ? (
                             <code className="text-blue-600 bg-blue-50 px-1 py-0.5 rounded text-sm font-mono" {...props} />
                           ) : (
                             <code className="block bg-gray-100 p-4 rounded-lg text-sm font-mono overflow-x-auto mb-4" {...props} />
                           ),
-                        pre: ({node, ...props}) => (
+                        pre: ({...props}) => (
                           <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto mb-4" {...props} />
                         ),
-                        strong: ({node, ...props}) => <strong className="font-semibold text-gray-900" {...props} />,
-                        em: ({node, ...props}) => <em className="italic text-gray-700" {...props} />,
-                        a: ({node, ...props}) => (
+                        strong: ({...props}) => <strong className="font-semibold text-gray-900" {...props} />,
+                        em: ({...props}) => <em className="italic text-gray-700" {...props} />,
+                        a: ({...props}) => (
                           <a className="text-blue-600 hover:text-blue-800 underline" {...props} />
                         ),
                       }}
@@ -295,42 +309,6 @@ export default function ResultPage() {
               </CardContent>
             </Card>
 
-            {/* Images */}
-            {result.featured_image_url && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <ImageIcon className="h-5 w-5" />
-                    <span>Generated Images</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <Label>Featured Image</Label>
-                    <div className="mt-2 rounded-lg overflow-hidden border">
-                      <img 
-                        src={processImageUrl(result.featured_image_url) || result.featured_image_url} 
-                        alt="Featured image"
-                        className="w-full h-64 object-cover"
-                      />
-                    </div>
-                  </div>
-                  
-                  {result.thumbnail_url && (
-                    <div>
-                      <Label>Social Thumbnail</Label>
-                      <div className="mt-2 w-48 rounded-lg overflow-hidden border">
-                        <img 
-                          src={processImageUrl(result.thumbnail_url) || result.thumbnail_url} 
-                          alt="Social thumbnail"
-                          className="w-full h-36 object-cover"
-                        />
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             {/* Social Media Preview */}
             <Card>
@@ -343,7 +321,7 @@ export default function ResultPage() {
               <CardContent>
                 <SocialCardPreview
                   snippet={result.social_media_snippet}
-                  thumbnail={processImageUrl(result.thumbnail_url)}
+                  thumbnail={result.thumbnail_url}
                   title={result.seo_title}
                   description={result.meta_description}
                 />
@@ -402,6 +380,100 @@ export default function ResultPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Image Viewer */}
+            {(result.featured_image_url || result.thumbnail_url) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <ImageIcon className="h-5 w-5" />
+                    <span>Generated Images</span>
+                  </CardTitle>
+                  <CardDescription>
+                    View and download your generated images
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {result.featured_image_url && (
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        FEATURED IMAGE
+                      </Label>
+                      <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden cursor-pointer" onClick={() => setSelectedImage(result.featured_image_url || null)}>
+<Image 
+  src={processImageUrl(result.featured_image_url) || result.featured_image_url} 
+  alt="Featured image preview" 
+  className="w-full h-32 object-cover"
+/>
+                      </div>
+                      <div className="mt-2 flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => setSelectedImage(result.featured_image_url || null)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => handleCopy(result.featured_image_url || '', 'featured-image')}
+                        >
+                          {copied === 'featured-image' ? (
+                            <Check className="h-3 w-3 mr-1 text-green-600" />
+                          ) : (
+                            <Copy className="h-3 w-3 mr-1" />
+                          )}
+                          Copy URL
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {result.thumbnail_url && (
+                    <div>
+                      <Label className="text-xs font-medium text-muted-foreground">
+                        SOCIAL THUMBNAIL
+                      </Label>
+                      <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden cursor-pointer" onClick={() => setSelectedImage(result.thumbnail_url || null)}>
+<Image 
+  src={processImageUrl(result.thumbnail_url) || result.thumbnail_url} 
+  alt="Thumbnail preview" 
+  className="w-full h-32 object-cover"
+/>
+                      </div>
+                      <div className="mt-2 flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => setSelectedImage(result.thumbnail_url || null)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1 text-xs"
+                          onClick={() => handleCopy(result.thumbnail_url || '', 'thumbnail')}
+                        >
+                          {copied === 'thumbnail' ? (
+                            <Check className="h-3 w-3 mr-1 text-green-600" />
+                          ) : (
+                            <Copy className="h-3 w-3 mr-1" />
+                          )}
+                          Copy URL
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* SEO Information */}
             <Card>
@@ -485,6 +557,77 @@ export default function ResultPage() {
           </div>
         </div>
       </div>
+
+      {/* Image Modal */}
+      {selectedImage && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-5xl max-h-full">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 hover:bg-white/10"
+              onClick={() => setSelectedImage(null)}
+            >
+              <X className="h-6 w-6" />
+              <span className="ml-2">Close</span>
+            </Button>
+            
+            <div 
+              className="bg-white rounded-lg overflow-hidden shadow-2xl max-h-[90vh] max-w-[90vw]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative">
+                <img
+                  src={selectedImage}
+                  alt="Full size image"
+                  className="max-w-full max-h-[80vh] object-contain"
+                  onError={() => {
+                    console.error('Modal image failed to load:', selectedImage);
+                  }}
+                />
+              </div>
+              
+              <div className="p-4 bg-gray-50 flex justify-between items-center">
+                <span className="text-sm text-gray-600">
+                  Click image or press ESC to close
+                </span>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleCopy(selectedImage, 'modal-image')}
+                  >
+                    {copied === 'modal-image' ? (
+                      <Check className="h-4 w-4 mr-2 text-green-600" />
+                    ) : (
+                      <Copy className="h-4 w-4 mr-2" />
+                    )}
+                    Copy URL
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const link = document.createElement('a');
+                      link.href = selectedImage;
+                      link.download = 'generated-image.jpg';
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

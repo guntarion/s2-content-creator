@@ -10,9 +10,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Wifi, WifiOff, RotateCcw, ExternalLink } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 import { useWorkflowTracking } from '@/hooks/useWorkflowTracking';
 import { BlogPostResult } from '@/lib/types';
@@ -34,7 +33,7 @@ export function WorkflowTracker({
   onViewResult,
   className 
 }: WorkflowTrackerProps) {
-  const [stepOutputs, setStepOutputs] = useState<Record<string, any>>({});
+  const [stepOutputs, setStepOutputs] = useState<Record<string, unknown>>({});
   const [showRetryPrompt, setShowRetryPrompt] = useState(false);
 
   const {
@@ -67,7 +66,7 @@ export function WorkflowTracker({
   useEffect(() => {
     if (status?.intermediate_output) {
       // Use real outputs from backend instead of mock data
-      const outputs: Record<string, any> = {};
+      const outputs: Record<string, unknown> = {};
       
       // Extract outputs from backend intermediate_output
       Object.keys(status.intermediate_output).forEach(key => {

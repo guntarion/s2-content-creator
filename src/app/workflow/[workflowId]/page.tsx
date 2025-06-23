@@ -6,22 +6,16 @@
  */
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ExternalLink, Download, Share2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 import { WorkflowTracker } from '@/components/workflow/WorkflowTracker';
-import { BlogPostResult } from '@/lib/types';
 
-interface WorkflowPageProps {
-  params: {
-    workflowId: string;
-  };
-}
 
 export default function WorkflowPage() {
   const params = useParams();
@@ -30,7 +24,7 @@ export default function WorkflowPage() {
   
   const workflowId = params.workflowId as string;
 
-  const handleComplete = (result: BlogPostResult) => {
+  const handleComplete = () => {
     setShowSuccessActions(true);
     
     // Auto-navigate to results page after a short delay
@@ -197,57 +191,3 @@ export default function WorkflowPage() {
   );
 }
 
-/**
- * Loading component for when the workflow is initializing
- */
-function WorkflowLoading() {
-  return (
-    <div className="h-screen flex items-center justify-center">
-      <Card className="p-8 text-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"
-        />
-        <h3 className="text-lg font-semibold mb-2">Initializing Workflow</h3>
-        <p className="text-muted-foreground">
-          Setting up your AI content generation...
-        </p>
-      </Card>
-    </div>
-  );
-}
-
-/**
- * Error component for workflow failures
- */
-function WorkflowError({ 
-  error, 
-  onRetry, 
-  onBack 
-}: { 
-  error: string;
-  onRetry: () => void;
-  onBack: () => void;
-}) {
-  return (
-    <div className="h-screen flex items-center justify-center">
-      <Card className="p-8 text-center max-w-md">
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-red-600 text-xl">⚠</span>
-        </div>
-        
-        <h3 className="text-lg font-semibold mb-2">Workflow Failed</h3>
-        <p className="text-muted-foreground mb-6">{error}</p>
-        
-        <div className="flex space-x-3">
-          <Button onClick={onRetry}>Try Again</Button>
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Generate
-          </Button>
-        </div>
-      </Card>
-    </div>
-  );
-}

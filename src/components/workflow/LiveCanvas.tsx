@@ -13,24 +13,35 @@ import {
   Image as ImageIcon, 
   Tag, 
   Clock, 
-  Eye,
   Share2,
   Sparkles
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { WorkflowStatus, BlogPostResult } from '@/lib/types';
+import {
+  WorkflowStatus,
+  BlogPostResult,
+  SEOOutput,
+  ContentOutput,
+  KeywordOutput,
+  ImageOutput
+} from '@/lib/types';
 import { processImageUrl } from '@/lib/image-utils';
 import { SocialCardPreview } from './SocialCardPreview';
 
 interface LiveCanvasProps {
   status: WorkflowStatus | null;
-  stepOutputs: Record<string, any>;
+  stepOutputs: {
+    seo_optimization?: SEOOutput;
+    content_generation?: ContentOutput;
+    keyword_research?: KeywordOutput;
+    image_generation?: ImageOutput;
+    thumbnail_creation?: ImageOutput;
+    [key: string]: unknown;
+  };
   result: BlogPostResult | null;
   isLoading?: boolean;
   className?: string;
@@ -238,7 +249,7 @@ function KeywordSection({ keywords }: { keywords?: string[] }) {
           initial="initial"
           animate="animate"
         >
-          {keywords.map((keyword, index) => (
+          {keywords.map((keyword) => (
             <motion.div
               key={keyword}
               variants={{
@@ -257,7 +268,7 @@ function KeywordSection({ keywords }: { keywords?: string[] }) {
   );
 }
 
-function SEOMetadataPreview({ seoData }: { seoData: any }) {
+function SEOMetadataPreview({ seoData }: { seoData: SEOOutput | undefined }) {
   return (
     <Card className="bg-green-50 border-green-200">
       <CardHeader className="pb-3">
@@ -270,18 +281,18 @@ function SEOMetadataPreview({ seoData }: { seoData: any }) {
         <div>
           <label className="text-sm font-medium text-green-700">SEO Title</label>
           <div className="mt-1 p-2 bg-white rounded border text-sm">
-            {seoData.title || 'Optimizing...'}
+            {seoData?.title || 'Optimizing...'}
           </div>
         </div>
         
         <div>
           <label className="text-sm font-medium text-green-700">Meta Description</label>
           <div className="mt-1 p-2 bg-white rounded border text-sm">
-            {seoData.description || 'Creating description...'}
+            {seoData?.description || 'Creating description...'}
           </div>
         </div>
 
-        {seoData.tags && (
+        {seoData?.tags && (
           <div>
             <label className="text-sm font-medium text-green-700">Tags</label>
             <div className="mt-1 flex flex-wrap gap-1">
@@ -475,7 +486,7 @@ function SocialSection({
   thumbnail, 
   title 
 }: { 
-  snippet?: string | { snippet?: string; platform_optimized?: any };
+  snippet?: string | { snippet?: string; platform_optimized?: unknown };
   thumbnail?: string;
   title?: string;
 }) {

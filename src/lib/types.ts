@@ -4,7 +4,7 @@
  */
 
 // Base API Response Types
-export interface APIResponse<T = any> {
+export interface APIResponse<T = unknown> {
   status: string;
   data?: T;
   message?: string;
@@ -13,7 +13,7 @@ export interface APIResponse<T = any> {
 export interface APIError {
   error: string;
   message: string;
-  details?: any;
+  details?: unknown;
 }
 
 // Blog Generation Request
@@ -42,7 +42,7 @@ export interface WorkflowStepData {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress: number;             // 0-100 for this specific step
   log_message?: string;         // Real-time status message
-  output?: Record<string, any>; // Step output data
+  output?: Record<string, unknown>; // Step output data
   started_at?: string;          // ISO timestamp
   completed_at?: string;        // ISO timestamp
 }
@@ -53,14 +53,14 @@ export interface WorkflowStatus {
   status: 'pending' | 'processing' | 'completed' | 'failed';
   progress: number;              // 0-100 overall
   current_step: string;
-  result?: any;
+  result?: unknown;
   error?: string;
   created_at: string;           // ISO timestamp
   updated_at: string;           // ISO timestamp
   
   // Enhanced data for frontend (from backend)
   steps?: Record<string, WorkflowStepData>;     // Step-by-step status
-  intermediate_output?: Record<string, any>;    // Current canvas data
+  intermediate_output?: Record<string, unknown>;    // Current canvas data
 }
 
 // Blog Post Result
@@ -96,6 +96,7 @@ export interface KeywordOutput {
   lsi_keywords: string[];
   search_intent: string;
   content_focus: string;
+  keywords: string[];
   content_structure: {
     seo_title: string;
     h2_suggestions: string[];
@@ -107,6 +108,7 @@ export interface ContentOutput {
   content: string;
   word_count: number;
   headings: string[];
+  title: string;
 }
 
 export interface SEOOutput {
@@ -158,7 +160,7 @@ export enum APIErrorType {
 export interface ProcessedAPIError {
   type: APIErrorType;
   message: string;
-  details?: any;
+  details?: unknown;
   retryable: boolean;
 }
 
@@ -194,10 +196,6 @@ export interface APIClientConfig {
   pollingInterval: number;
 }
 
-// Form Types
-export interface GenerationFormData extends BlogRequest {
-  // Additional form-specific fields can be added here
-}
 
 // Social Media Platform Types
 export type SocialPlatform = 'twitter' | 'linkedin' | 'instagram' | 'facebook';

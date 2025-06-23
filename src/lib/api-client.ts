@@ -10,16 +10,15 @@ import {
   WorkflowStatus,
   BlogPostResult,
   APIErrorType,
-  ProcessedAPIError,
   APIClientConfig
 } from './types';
 
 export class BlogAPIError extends Error {
   public readonly type: APIErrorType;
   public readonly retryable: boolean;
-  public readonly details?: any;
+  public readonly details?: unknown;
 
-  constructor(type: APIErrorType, message: string, retryable = false, details?: any) {
+  constructor(type: APIErrorType, message: string, retryable = false, details?: unknown) {
     super(message);
     this.name = 'BlogAPIError';
     this.type = type;
@@ -98,7 +97,7 @@ export class BlogAPIClient {
   /**
    * Safely parse error response without throwing
    */
-  private async safeParseErrorResponse(response: Response): Promise<any> {
+  private async safeParseErrorResponse(response: Response): Promise<unknown> {
     try {
       return await response.json();
     } catch {
@@ -109,7 +108,24 @@ export class BlogAPIClient {
   /**
    * Create appropriate API error based on HTTP status
    */
-  private createAPIError(status: number, errorData: any): BlogAPIError {
+  // Type guards for error responses
+  private isErrorWithMessage = (error: unknown): error is { message: string } =>
+    typeof error === 'object' && error !== null && 'message' in error &&
+    typeof (error as { message: unknown }).message === 'string';
+
+  private isErrorWithDetail = (error: unknown): error is { detail: string } =>
+    typeof error === 'object' && error !== null && 'detail' in error &&
+    typeof (error as { detail: unknown }).detail === 'string';
+
+  private isNetworkError = (error: unknown): error is Error =>
+    error instanceof Error &&
+    ('name' in error && (
+      error.name === 'TypeError' ||
+      error.name === 'AbortError' ||
+      error.message.includes('fetch')
+    ));
+
+  private createAPIError(status: number, errorData: unknown): BlogAPIError {
     switch (status) {
       case 400:
         return new BlogAPIError(
@@ -129,7 +145,7 @@ export class BlogAPIClient {
           APIErrorType.VALIDATION_ERROR,
           'Validation error. Please check your input.',
           false,
-          errorData.detail
+          this.isErrorWithDetail(errorData) ? errorData.detail : undefined
         );
       case 500:
         return new BlogAPIError(
@@ -146,7 +162,7 @@ export class BlogAPIClient {
       default:
         return new BlogAPIError(
           APIErrorType.UNKNOWN_ERROR,
-          `HTTP ${status}: ${errorData.message || 'Unknown error'}`,
+          `HTTP ${status}: ${this.isErrorWithMessage(errorData) ? errorData.message : 'Unknown error'}`,
           status >= 500
         );
     }
@@ -155,30 +171,32 @@ export class BlogAPIClient {
   /**
    * Handle request errors (network, timeout, etc.)
    */
-  private handleRequestError(error: any): BlogAPIError {
+  private handleRequestError(error: unknown): BlogAPIError {
     if (error instanceof BlogAPIError) {
       return error;
     }
 
-    if (error.name === 'AbortError') {
-      return new BlogAPIError(
-        APIErrorType.TIMEOUT_ERROR,
-        'Request timeout. Please try again.',
-        true
-      );
-    }
+    if (this.isNetworkError(error)) {
+      if (error.name === 'AbortError') {
+        return new BlogAPIError(
+          APIErrorType.TIMEOUT_ERROR,
+          'Request timeout. Please try again.',
+          true
+        );
+      }
 
-    if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      return new BlogAPIError(
-        APIErrorType.NETWORK_ERROR,
-        'Network connection failed. Please check your internet connection.',
-        true
-      );
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        return new BlogAPIError(
+          APIErrorType.NETWORK_ERROR,
+          'Network connection failed. Please check your internet connection.',
+          true
+        );
+      }
     }
 
     return new BlogAPIError(
       APIErrorType.UNKNOWN_ERROR,
-      error.message || 'An unexpected error occurred',
+      this.isErrorWithMessage(error) ? error.message : 'An unexpected error occurred',
       true
     );
   }
@@ -285,7 +303,7 @@ export class MockBlogAPIClient extends BlogAPIClient {
     return new Promise(resolve => setTimeout(resolve, delay));
   }
 
-  async generateBlog(request: BlogRequest): Promise<WorkflowResponse> {
+  async generateBlog(): Promise<WorkflowResponse> {
     await this.simulateDelay();
     
     return {
@@ -326,7 +344,7 @@ export class MockBlogAPIClient extends BlogAPIClient {
     };
   }
 
-  async getBlogResult(workflowId: string): Promise<BlogPostResult> {
+  async getBlogResult(): Promise<BlogPostResult> {
     await this.simulateDelay();
     
     return {

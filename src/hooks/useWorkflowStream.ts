@@ -2,7 +2,7 @@
  * Hook for Server-Sent Events (SSE) real-time workflow updates
  */
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { WorkflowStatus, UseWorkflowStreamReturn } from '@/lib/types';
 import { config } from '@/lib/config';
 
@@ -16,18 +16,20 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
   const reconnectAttempts = useRef(0);
   const maxReconnectAttempts = 5;
 
-  useEffect(() => {
-    if (!workflowId || !config.enableSSE) {
-      cleanup();
-      return;
+  const cleanup = useCallback(() => {
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
     }
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    setConnectionState('disconnected');
+    reconnectAttempts.current = 0;
+  }, []);
 
-    connectToSSE();
-
-    return cleanup;
-  }, [workflowId]);
-
-  const connectToSSE = () => {
+  const connectToSSE = useCallback(() => {
     if (!workflowId) return;
 
     try {
@@ -41,7 +43,7 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
       const eventSource = new EventSource(sseUrl);
       eventSourceRef.current = eventSource;
 
-      // Connection opened
+      // Handle connection opened
       eventSource.onopen = () => {
         console.log('SSE connection opened for workflow:', workflowId);
         setConnectionState('connected');
@@ -49,7 +51,7 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
         reconnectAttempts.current = 0;
       };
 
-      // Message received
+      // Handle messages
       eventSource.onmessage = (event) => {
         try {
           const statusData = JSON.parse(event.data);
@@ -60,34 +62,29 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
             eventSource.close();
             setConnectionState('disconnected');
           }
-        } catch (parseError) {
-          console.error('Failed to parse SSE data:', parseError);
+        } catch (err) {
+          console.error('Error parsing SSE data:', err);
           setError('Failed to parse status update');
         }
       };
 
-      // Error handling
+      // Handle errors with exponential backoff
       eventSource.onerror = (event) => {
         console.error('SSE connection error:', event);
-        setConnectionState('disconnected');
+        cleanup();
         
-        // Check if we should attempt to reconnect
         if (reconnectAttempts.current < maxReconnectAttempts) {
-          const delay = Math.pow(2, reconnectAttempts.current) * 1000; // Exponential backoff
-          
+          const delay = Math.pow(2, reconnectAttempts.current) * 1000;
           setError(`Connection lost. Reconnecting in ${delay / 1000}s...`);
           
-          reconnectTimeoutRef.current = setTimeout(() => {
-            reconnectAttempts.current++;
-            connectToSSE();
-          }, delay);
+          reconnectAttempts.current++;
+          reconnectTimeoutRef.current = setTimeout(connectToSSE, delay);
         } else {
-          setError('Connection failed. Falling back to polling...');
-          cleanup();
+          setError('Failed to connect to workflow stream after multiple attempts');
         }
       };
 
-      // Handle specific SSE event types (if backend sends them)
+      // Handle specific event types
       eventSource.addEventListener('status_update', (event) => {
         try {
           const statusData = JSON.parse(event.data);
@@ -120,44 +117,37 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
         }
       });
 
-    } catch (initError) {
-      console.error('Failed to initialize SSE connection:', initError);
+    } catch (err) {
+      console.error('Failed to initialize SSE connection:', err);
       setError('Failed to establish real-time connection');
       setConnectionState('disconnected');
     }
-  };
+  }, [workflowId, cleanup]);
 
-  const cleanup = () => {
-    // Close EventSource
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-      eventSourceRef.current = null;
+  // Setup effect
+  useEffect(() => {
+    if (!workflowId || !config.enableSSE) {
+      cleanup();
+      return;
     }
 
-    // Clear reconnect timeout
-    if (reconnectTimeoutRef.current) {
-      clearTimeout(reconnectTimeoutRef.current);
-      reconnectTimeoutRef.current = null;
-    }
+    connectToSSE();
+    return cleanup;
+  }, [workflowId, connectToSSE, cleanup]);
 
-    // Reset state
-    setConnectionState('disconnected');
-    reconnectAttempts.current = 0;
-  };
-
-  const forceReconnect = () => {
+  const forceReconnect = useCallback(() => {
     cleanup();
     if (workflowId) {
       reconnectAttempts.current = 0;
       connectToSSE();
     }
-  };
+  }, [workflowId, cleanup, connectToSSE]);
 
-  return { 
-    data, 
-    error, 
+  return {
+    data,
+    error,
     connectionState,
-    forceReconnect 
+    forceReconnect
   };
 }
 
@@ -236,7 +226,7 @@ export function useMultipleWorkflowStreams(workflowIds: string[]) {
     });
 
     setConnections(newConnections);
-  }, [workflowIds]);
+  }, [workflowIds, connections]);
 
   return {
     connections: Array.from(connections.entries()),

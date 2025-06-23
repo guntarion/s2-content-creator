@@ -200,7 +200,7 @@ export default function GeneratePage() {
               <CardHeader>
                 <CardTitle>The AI Assembly Line Process</CardTitle>
                 <CardDescription>
-                  Here's what happens behind the scenes
+                  Here&apos;s what happens behind the scenes
                 </CardDescription>
               </CardHeader>
               <CardContent>

@@ -7,25 +7,23 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  PenSquare, 
-  Sparkles, 
-  Lightbulb, 
-  Image, 
-  Frame, 
+import type { LucideIcon } from 'lucide-react';
+import {
+  Search,
+  PenSquare,
+  Sparkles,
+  Lightbulb,
+  Image as ImageIcon,
+  Frame,
   Share2,
   Circle,
   CheckCircle,
   AlertCircle,
   Loader2,
   ChevronDown,
-  ChevronUp,
-  Clock,
-  Lightbulb as TipIcon
 } from 'lucide-react';
-
-import { Button } from '@/components/ui/button';
+import { KeywordOutput } from '@/lib/types';
+import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -33,35 +31,63 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { WorkflowStatus, StepStatus, WORKFLOW_STEPS_CONFIG } from '@/lib/types';
-import { cn } from '@/lib/utils';
+
+// Icon aliases to avoid name conflicts
+const TipIcon = Lightbulb;
+
+// Helper types for icon components
+interface StepIconProps {
+  className?: string;
+  status: StepStatus;
+  icon: string;
+}
+
+const StepIcon: React.FC<StepIconProps> = ({ className, status, icon }) => {
+  const IconComponent = STEP_ICONS[icon];
+  return (
+    <div className={cn(
+      "p-2 rounded-lg relative z-10 border-2",
+      status === 'completed' ? 'bg-green-100 border-green-300' :
+      status === 'processing' ? 'bg-blue-100 border-blue-300' :
+      status === 'failed' ? 'bg-red-100 border-red-300' : 'bg-gray-100 border-gray-300'
+    )}>
+      <IconComponent className={cn(
+        "h-4 w-4",
+        status === 'completed' ? 'text-green-600' :
+        status === 'processing' ? 'text-blue-600' :
+        status === 'failed' ? 'text-red-600' : 'text-gray-600',
+        className
+      )} />
+    </div>
+  );
+};
 
 interface ControlTowerProps {
   status: WorkflowStatus | null;
-  stepOutputs: Record<string, any>;
-  isLoading?: boolean;
+  stepOutputs: Record<string, unknown>;
   className?: string;
+  isLoading?: boolean;
 }
 
 interface WorkflowStepProps {
   stepKey: string;
   config: typeof WORKFLOW_STEPS_CONFIG[keyof typeof WORKFLOW_STEPS_CONFIG];
   status: StepStatus;
-  output?: any;
+  output?: unknown;
   isActive?: boolean;
   onClick?: () => void;
-  showConnector?: boolean;
   workflowStatus?: WorkflowStatus | null;
 }
 
-const STEP_ICONS = {
+const STEP_ICONS: Record<string, LucideIcon> = {
   Search,
-  PenSquare, 
+  PenSquare,
   Sparkles,
   Lightbulb,
-  Image,
+  Image: ImageIcon,
   Frame,
   Share2
-} as const;
+};
 
 const TIPS = [
   "💡 Pro Tip: Read your blog post aloud to check flow and tone.",
@@ -73,7 +99,7 @@ const TIPS = [
   "📈 Blog posts with 7+ images get the most social shares."
 ];
 
-export function ControlTower({ status, stepOutputs, isLoading, className }: ControlTowerProps) {
+export function ControlTower({ status, stepOutputs, className }: ControlTowerProps) {
   const [expandedStep, setExpandedStep] = useState<string | null>(null);
   const [currentTip, setCurrentTip] = useState(0);
 
@@ -184,11 +210,9 @@ export function ControlTower({ status, stepOutputs, isLoading, className }: Cont
                 />
               )}
               
-              {Object.entries(WORKFLOW_STEPS_CONFIG).map(([stepKey, config], index) => {
+              {Object.entries(WORKFLOW_STEPS_CONFIG).map(([stepKey, config]) => {
                 const stepStatus = getStepStatus(stepKey);
                 const isActive = currentStepKey === stepKey;
-                const hasOutput = stepOutputs[stepKey];
-                const isLast = index === Object.keys(WORKFLOW_STEPS_CONFIG).length - 1;
 
                 return (
                   <div key={stepKey} className="relative">
@@ -199,7 +223,6 @@ export function ControlTower({ status, stepOutputs, isLoading, className }: Cont
                       output={stepOutputs[stepKey]}
                       isActive={isActive}
                       onClick={() => handleStepClick(stepKey)}
-                      showConnector={!isLast}
                       workflowStatus={status}
                     />
                     
@@ -248,10 +271,8 @@ function WorkflowStep({
   output, 
   isActive, 
   onClick,
-  showConnector,
   workflowStatus
 }: WorkflowStepProps) {
-  const IconComponent = STEP_ICONS[config.icon as keyof typeof STEP_ICONS] || Circle;
   const hasOutput = Boolean(output);
   const isClickable = status === 'completed' || hasOutput;
 
@@ -305,19 +326,10 @@ function WorkflowStep({
             {/* Step Connection Point for Assembly Line */}
             <div className="relative flex flex-col items-center">
               {/* Step Icon */}
-              <div className={cn(
-                "p-2 rounded-lg relative z-10 border-2",
-                status === 'completed' ? 'bg-green-100 border-green-300' : 
-                status === 'processing' ? 'bg-blue-100 border-blue-300' : 
-                status === 'failed' ? 'bg-red-100 border-red-300' : 'bg-gray-100 border-gray-300'
-              )}>
-                <IconComponent className={cn(
-                  "h-4 w-4",
-                  status === 'completed' ? 'text-green-600' :
-                  status === 'processing' ? 'text-blue-600' :
-                  status === 'failed' ? 'text-red-600' : 'text-gray-600'
-                )} />
-              </div>
+              <StepIcon
+                status={status}
+                icon={config.icon}
+              />
             </div>
 
             {/* Step Content */}
@@ -416,7 +428,7 @@ function StepOutputDialog({
   onClose 
 }: { 
   stepKey: string | null;
-  output: any;
+  output: unknown;
   onClose: () => void;
 }) {
   if (!stepKey || !output) return null;
@@ -443,7 +455,7 @@ function StepOutputDialog({
   );
 }
 
-function StepOutputContent({ stepKey, output }: { stepKey: string; output: any }) {
+function StepOutputContent({ stepKey, output }: { stepKey: string; output: unknown }) {
   if (!output) return <p className="text-muted-foreground">No output available</p>;
 
   switch (stepKey) {
@@ -453,15 +465,15 @@ function StepOutputContent({ stepKey, output }: { stepKey: string; output: any }
           <div>
             <h4 className="font-medium mb-2">Keywords Found</h4>
             <div className="flex flex-wrap gap-2">
-              {output.keywords?.map((keyword: string, index: number) => (
+              {output && typeof output === 'object' && 'keywords' in output && Array.isArray(output.keywords) ? output.keywords.map((keyword: string, index: number) => (
                 <Badge key={index} variant="secondary">{keyword}</Badge>
-              ))}
+              )) : null}
             </div>
           </div>
-          {output.primary_keyword && (
+          {output && typeof output === 'object' && 'primary_keyword' in output && (output as KeywordOutput).primary_keyword && (
             <div>
               <h4 className="font-medium mb-1">Primary Keyword</h4>
-              <Badge variant="default">{output.primary_keyword}</Badge>
+              <Badge variant="default">{String((output as KeywordOutput).primary_keyword)}</Badge>
             </div>
           )}
         </div>
@@ -472,7 +484,7 @@ function StepOutputContent({ stepKey, output }: { stepKey: string; output: any }
         <div>
           <h4 className="font-medium mb-2">Generated Content Preview</h4>
           <div className="bg-gray-50 p-3 rounded-lg text-sm max-h-40 overflow-y-auto">
-            <pre className="whitespace-pre-wrap">{output.slice(0, 500)}...</pre>
+            <pre className="whitespace-pre-wrap">{typeof output === 'string' ? output.slice(0, 500) : JSON.stringify(output, null, 2).slice(0, 500)}...</pre>
           </div>
         </div>
       );

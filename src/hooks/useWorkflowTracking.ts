@@ -6,7 +6,6 @@ import { useState, useCallback, useEffect } from 'react';
 import useSWR from 'swr';
 import { 
   BlogRequest, 
-  WorkflowStatus, 
   BlogPostResult, 
   UseWorkflowTrackingReturn 
 } from '@/lib/types';
@@ -75,12 +74,32 @@ export function useWorkflowTracking(initialWorkflowId?: string | null): UseWorkf
     }
   }, [sseError, connectionState, useSSE]);
 
+  /**
+   * Fetch the final blog result
+   */
+  const fetchResult = useCallback(async () => {
+    if (!workflowId) return;
+
+    try {
+      setIsLoading(true);
+      const resultData = await client.getBlogResult(workflowId);
+      setResult(resultData);
+      setIsLoading(false);
+    } catch (err) {
+      const errorMessage = err instanceof BlogAPIError
+        ? err.message
+        : 'Failed to get blog result';
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  }, [workflowId, client]);
+
   // Handle workflow completion
   useEffect(() => {
     if (currentData?.status === 'completed' && workflowId && !result) {
       fetchResult();
     }
-  }, [currentData?.status, workflowId, result]);
+  }, [currentData?.status, workflowId, result, fetchResult]);
 
   // Handle workflow failure
   useEffect(() => {
@@ -96,25 +115,6 @@ export function useWorkflowTracking(initialWorkflowId?: string | null): UseWorkf
       setError(currentError);
     }
   }, [currentError]);
-
-  /**
-   * Fetch the final blog result
-   */
-  const fetchResult = useCallback(async () => {
-    if (!workflowId) return;
-
-    try {
-      const resultData = await client.getBlogResult(workflowId);
-      setResult(resultData);
-      setIsLoading(false);
-    } catch (err) {
-      const errorMessage = err instanceof BlogAPIError 
-        ? err.message 
-        : 'Failed to get blog result';
-      setError(errorMessage);
-      setIsLoading(false);
-    }
-  }, [workflowId, client]);
 
   /**
    * Start blog generation workflow
@@ -212,31 +212,3 @@ export function useWorkflowTracking(initialWorkflowId?: string | null): UseWorkf
   };
 }
 
-/**
- * Hook for tracking multiple workflows (future enhancement)
- */
-export function useMultipleWorkflowTracking() {
-  const [workflows, setWorkflows] = useState<Map<string, UseWorkflowTrackingReturn>>(new Map());
-
-  const createWorkflow = useCallback((id?: string) => {
-    const workflowId = id || `workflow-${Date.now()}`;
-    const workflow = useWorkflowTracking();
-    
-    setWorkflows(prev => new Map(prev).set(workflowId, workflow));
-    return workflow;
-  }, []);
-
-  const removeWorkflow = useCallback((id: string) => {
-    setWorkflows(prev => {
-      const next = new Map(prev);
-      next.delete(id);
-      return next;
-    });
-  }, []);
-
-  return {
-    workflows: Array.from(workflows.entries()),
-    createWorkflow,
-    removeWorkflow,
-  };
-}

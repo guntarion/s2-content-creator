@@ -15,7 +15,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -122,7 +121,7 @@ export function GenerationForm({ onSubmit, isLoading = false, className }: Gener
           <CardTitle className="text-2xl">Create Your Blog Post</CardTitle>
         </div>
         <CardDescription>
-          Tell us about your blog post and we'll create engaging, SEO-optimized content with images and social snippets.
+          Tell us about your blog post and we&apos;ll create engaging, SEO-optimized content with images and social snippets.
         </CardDescription>
         
         {/* Estimated time indicator */}
@@ -205,7 +204,7 @@ export function GenerationForm({ onSubmit, isLoading = false, className }: Gener
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="purpose">Content Purpose *</Label>
-              <Select onValueChange={(value) => setValue('purpose', value as any)}>
+              <Select onValueChange={(value) => setValue('purpose', value as BlogRequest['purpose'])}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select purpose" />
                 </SelectTrigger>

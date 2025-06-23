@@ -9,7 +9,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Twitter, Linkedin, Instagram } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -81,8 +80,7 @@ export function SocialCardPreview({
           <TabsContent value="instagram">
             <InstagramCard 
               snippet={snippet} 
-              thumbnail={thumbnail} 
-              title={title}
+              thumbnail={thumbnail}
             />
           </TabsContent>
         </div>
@@ -288,12 +286,10 @@ function LinkedInCard({
 
 function InstagramCard({ 
   snippet, 
-  thumbnail, 
-  title 
+  thumbnail
 }: {
   snippet: string;
   thumbnail?: string;
-  title?: string;
 }) {
   return (
     <motion.div
