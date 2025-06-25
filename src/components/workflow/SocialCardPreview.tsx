@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, MessageCircle, Repeat2, Share, MoreHorizontal, Twitter, Linkedin, Instagram } from 'lucide-react';
+import Image from 'next/image';
 
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -133,10 +134,12 @@ function TwitterCard({
                 {(thumbnail || title || description) && (
                   <div className="mt-3 border border-gray-200 rounded-lg overflow-hidden">
                     {thumbnail && (
-                      <img 
+                      <Image 
                         src={processImageUrl(thumbnail) || thumbnail} 
                         alt="Preview" 
                         className="w-full h-32 object-cover"
+                        width={400}
+                        height={128}
                       />
                     )}
                     {(title || description) && (
@@ -232,10 +235,12 @@ function LinkedInCard({
           {(thumbnail || title || description) && (
             <div className="border-t border-gray-100">
               {thumbnail && (
-                <img 
+                <Image 
                   src={processImageUrl(thumbnail) || thumbnail} 
                   alt="Preview" 
                   className="w-full h-40 object-cover"
+                  width={400}
+                  height={160}
                 />
               )}
               {(title || description) && (
@@ -317,10 +322,12 @@ function InstagramCard({
           {/* Image */}
           {thumbnail && (
             <div className="aspect-square">
-              <img 
+              <Image 
                 src={processImageUrl(thumbnail) || thumbnail} 
                 alt="Instagram post" 
                 className="w-full h-full object-cover"
+                width={400}
+                height={400}
               />
             </div>
           )}

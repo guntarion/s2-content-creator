@@ -9,7 +9,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Sparkles, Target, Users, FileText, Image, Search } from 'lucide-react';
+import { Loader2, Sparkles, Target, Users, FileText, ImageIcon, Search } from 'lucide-react';
+import { useSession, signOut } from "next-auth/react"
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -63,6 +64,7 @@ const POPULAR_AUDIENCES = [
 ];
 
 export function GenerationForm({ onSubmit, isLoading = false, className }: GenerationFormProps) {
+  const { data: session } = useSession()
   const [selectedIndustry, setSelectedIndustry] = useState<string>('');
   const [customIndustry, setCustomIndustry] = useState<string>('');
 
@@ -116,9 +118,17 @@ export function GenerationForm({ onSubmit, isLoading = false, className }: Gener
   return (
     <Card className={className}>
       <CardHeader className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <Sparkles className="h-6 w-6 text-blue-500" />
-          <CardTitle className="text-2xl">Create Your Blog Post</CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Sparkles className="h-6 w-6 text-blue-500" />
+            <CardTitle className="text-2xl">Create Your Blog Post</CardTitle>
+          </div>
+          {session && (
+            <div className="flex items-center space-x-2">
+              <p>Welcome, {session.user?.name}</p>
+              <Button onClick={() => signOut()}>Sign out</Button>
+            </div>
+          )}
         </div>
         <CardDescription>
           Tell us about your blog post and we&apos;ll create engaging, SEO-optimized content with images and social snippets.
@@ -315,7 +325,7 @@ export function GenerationForm({ onSubmit, isLoading = false, className }: Gener
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
                   <Label className="flex items-center space-x-2">
-                    <Image className="h-4 w-4" />
+                    <ImageIcon className="h-4 w-4" />
                     <span>Generate Images</span>
                   </Label>
                   <p className="text-xs text-muted-foreground">

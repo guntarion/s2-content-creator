@@ -10,12 +10,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { 
   FileText, 
-  Image as ImageIcon, 
+  ImageIcon, 
   Tag, 
   Clock, 
   Share2,
   Sparkles
 } from 'lucide-react';
+import Image from 'next/image';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -438,9 +439,11 @@ function ImageSection({
             <div className="space-y-2">
               <label className="text-sm font-medium">Featured Image</label>
               <div className="rounded-lg overflow-hidden border">
-                <img 
+                <Image 
                   src={featuredImage} 
                   alt="Generated featured image"
+                  width={500}
+                  height={256}
                   className="w-full h-64 object-cover"
                 />
               </div>
@@ -467,10 +470,12 @@ function ImageSection({
             <div className="space-y-2">
               <label className="text-sm font-medium">Social Thumbnail</label>
               <div className="w-48 rounded-lg overflow-hidden border">
-                <img 
+                <Image 
                   src={thumbnail} 
                   alt="Social media thumbnail"
                   className="w-full h-36 object-cover"
+                  width={192}
+                  height={144}
                 />
               </div>
             </div>

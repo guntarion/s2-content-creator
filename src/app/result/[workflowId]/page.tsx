@@ -584,9 +584,11 @@ export default function ResultPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="relative">
-                <img
+                <Image
                   src={selectedImage}
                   alt="Full size image"
+                  width={1920}
+                  height={1080}
                   className="max-w-full max-h-[80vh] object-contain"
                   onError={() => {
                     console.error('Modal image failed to load:', selectedImage);
